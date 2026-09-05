@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "peka"
+version = "0.2.0"
+description = "PEKA paper reproduction codebase (arxiv 2504.07061), breast-cancer-only"
+requires-python = ">=3.9"
+dependencies = [
+    "torch",
+    "pytorch_lightning",
+    "hydra-zen",
+    "peft",
+    "wandb",
+    "scanpy",
+    "anndata",
+    "h5py",
+    "scikit-learn",
+    "pandas",
+    "numpy",
+    "tqdm",
+    "python-dotenv",
+    "huggingface_hub",
+    "biomart",
+    "timm",
+    "openslide-bin",
+    "local_attention",
+    "einops",
+    "hf_transfer",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["peka*"]

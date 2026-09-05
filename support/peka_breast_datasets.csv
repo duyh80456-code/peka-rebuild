@@ -1,0 +1,2 @@
+dataset_name,dataset_storage_folder,hest_loc,source_index_loc,organ,species,oncotree_code,platform,patch_size,pixel_size,align_gene_name_files,extract_patches_files,with_scLLM_embed_files
+breast_in_hest,,,,Breast,Homo sapiens,,Visium,224,0.5,,,
