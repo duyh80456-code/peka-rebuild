@@ -11,7 +11,7 @@ dependencies = [
     "torch",
     "pytorch_lightning",
     "hydra-zen",
-    "peft",
+    "peft>=0.17,<0.19",
     "wandb",
     "scanpy",
     "anndata",

@@ -39,6 +39,7 @@ def run_phase2(
     joint: bool = True,
     max_epochs: int = 50,
     additional_pl_paras: Optional[dict] = None,
+    resume_checkpoint: Optional[Path] = None,
 ):
     """Run KD training and return the fitted model.
 
@@ -125,6 +126,13 @@ def run_phase2(
     )
 
     logger.info(f"Starting trainer.fit (exp={exp_name}, epochs={max_epochs}, joint={joint})")
-    trainer.fit(kd_model, train_loader, val_loader)
+    if resume_checkpoint:
+        logger.info(f"Resuming from checkpoint: {resume_checkpoint}")
+    trainer.fit(
+        kd_model,
+        train_loader,
+        val_loader,
+        ckpt_path=str(resume_checkpoint) if resume_checkpoint else None,
+    )
     logger.info(f"Training done. Outputs at {output_dir}")
     return kd_model, trainer

@@ -87,6 +87,9 @@ def main() -> None:
     parser.add_argument("--num_classes", type=int, default=DEFAULT_N_CLUSTERS)
     parser.add_argument("--exp_name", default=None,
                         help="Default: {encoder}_{peft}_breast_in_hest")
+    parser.add_argument("--resume", default=None,
+                        help="Lightning .ckpt to resume from (e.g. last.ckpt). "
+                             "Restores optimizer, scheduler and epoch state.")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--with_logger", choices=["wandb", "csv"], default="wandb")
     parser.add_argument("--limit_train_batches", type=int, default=None,
@@ -275,6 +278,7 @@ def main() -> None:
         ckpt_folder=PRETRAINED_ROOT,
         max_epochs=args.epochs,
         additional_pl_paras=additional,
+        resume_checkpoint=args.resume,
     )
     if args.fold is not None:
         checkpoint_path = PRETRAINED_ROOT / args.exp_name / "last.ckpt"
