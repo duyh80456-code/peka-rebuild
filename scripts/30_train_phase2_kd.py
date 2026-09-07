@@ -90,6 +90,10 @@ def main() -> None:
     parser.add_argument("--resume", default=None,
                         help="Lightning .ckpt to resume from (e.g. last.ckpt). "
                              "Restores optimizer, scheduler and epoch state.")
+    parser.add_argument("--max_time", default=None,
+                        help="Lightning max_time 'DD:HH:MM:SS'. Stop training "
+                             "gracefully before a hosted session (Kaggle: 12h) is "
+                             "killed, so last.ckpt is written and can be copied out.")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--with_logger", choices=["wandb", "csv"], default="wandb")
     parser.add_argument("--limit_train_batches", type=int, default=None,
@@ -255,6 +259,8 @@ def main() -> None:
         "accumulate_grad_batches": args.accumulate_grad_batches,
         "precision": args.precision,
     }
+    if args.max_time:
+        additional["max_time"] = args.max_time
     if args.limit_train_batches is not None:
         additional["limit_train_batches"] = args.limit_train_batches
     if args.limit_val_batches is not None:
