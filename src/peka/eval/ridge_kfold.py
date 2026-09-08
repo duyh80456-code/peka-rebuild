@@ -36,6 +36,7 @@ def evaluate_kfold(
     fold: int = None,
     feature_dir: Path = None,
     run_id: str = None,
+    cv: str = "slide",
 ) -> pd.DataFrame:
     """Run slide-grouped gene-expression regression and return results.
 
@@ -137,6 +138,15 @@ def evaluate_kfold(
         embeddings = embeddings_dict[gene]
         labels = labels_dict[gene]
         groups = groups_dict[gene]
+        if cv == "spot":
+            # Diagnostic only. Giving every spot its own group turns GroupKFold
+            # into a plain KFold, so neighbouring spots from one slide land on
+            # both sides of the split. Spatial neighbours are highly correlated,
+            # so this leaks and reads far higher than slide-holdout -- which is
+            # exactly what makes it useful for telling a broken model apart
+            # from an honest protocol. Never quote these numbers as results.
+            import numpy as _np
+            groups = _np.arange(len(labels))
         if embeddings.shape[0] < 321:  # paper threshold
             logger.warning(f"Skipping {gene}: only {embeddings.shape[0]} points")
             continue

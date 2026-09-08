@@ -47,6 +47,10 @@ def main() -> None:
                         help="Evaluate the fixed held-out test slides for this fold")
     parser.add_argument("--feature_dir", default=None,
                         help="Fold-specific PEKA feature directory")
+    parser.add_argument("--cv", choices=["slide", "spot"], default="slide",
+                        help="slide: hold whole slides out (honest, default). "
+                             "spot: random spots, leaks across neighbours -- "
+                             "diagnostic only.")
     parser.add_argument("--probe_only", action="store_true",
                         help="Allow grouped probing of a checkpoint trained on the full cohort")
     parser.add_argument("--run_id", default=None)
@@ -114,6 +118,7 @@ def main() -> None:
         image_encoder_name=image_encoder_short,
         image_backbone=args.encoder,
         feature_type=args.feature_type,
+        cv=args.cv,
         gene_list_json=Path(args.gene_list_json),
         output_root=output_root,
         epochs=args.epochs,
