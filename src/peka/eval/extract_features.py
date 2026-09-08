@@ -71,8 +71,15 @@ def extract_peka_features(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if device == "cuda" and not torch.cuda.is_available():
-        logger.warning("CUDA not available, using CPU (slow)")
-        device = "cpu"
+        # Falling back silently is worse than failing. 30k patches through a
+        # 1.1B ViT-g is ~40 minutes on a T4 and ~43 hours on CPU, and the only
+        # symptom is a WARNING scrolling past hour one of a 12-hour session.
+        # Ask for CPU explicitly (device="cpu") if that is really the intent.
+        raise RuntimeError(
+            "device='cuda' was requested but no GPU is visible. Feature "
+            "extraction on CPU takes ~43 hours here; enable a GPU, or pass "
+            "device='cpu' if you mean it."
+        )
 
     # Read the checkpoint BEFORE building the model. The translate MLP's output
     # width is whatever the teacher embedding actually was during training, and
