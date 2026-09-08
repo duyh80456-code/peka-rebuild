@@ -134,5 +134,14 @@ def run_phase2(
         val_loader,
         ckpt_path=str(resume_checkpoint) if resume_checkpoint else None,
     )
-    logger.info(f"Training done. Outputs at {output_dir}")
+    # fit() returns both when the epoch budget is spent and when --max_time
+    # cuts it short, and the process exits 0 either way. Say which, or the run
+    # looks finished on the host's dashboard while it is only part-way through.
+    done = trainer.current_epoch
+    if done >= max_epochs:
+        logger.info(f"Training COMPLETE: {done}/{max_epochs} epochs. Outputs at {output_dir}")
+    else:
+        logger.info(f"Training STOPPED EARLY at epoch {done}/{max_epochs} "
+                    f"(max_time reached). Re-run with --resume to continue. "
+                    f"Outputs at {output_dir}")
     return kd_model, trainer
