@@ -74,13 +74,22 @@ def extract_peka_features(
         logger.warning("CUDA not available, using CPU (slow)")
         device = "cpu"
 
-    # Rebuild model
-    model = instantiate(model_config, target_dim=target_dim)
-
-    # Load checkpoint
-    ckpt = torch.load(str(checkpoint_path), map_location=device)
+    # Read the checkpoint BEFORE building the model. The translate MLP's output
+    # width is whatever the teacher embedding actually was during training, and
+    # scFoundation emits 3072 here, not the 1536 the paper quotes. Defaulting to
+    # the paper's number builds the wrong architecture and load_state_dict dies
+    # on a shape mismatch. The checkpoint already knows the answer.
+    ckpt = torch.load(str(checkpoint_path), map_location="cpu")
     state_dict = ckpt.get("state_dict", ckpt)
     state_dict = _drop_classifier_weights(_strip_model_prefix(state_dict))
+
+    w = state_dict.get("translate_model.2.weight")
+    if w is not None and int(w.shape[0]) != target_dim:
+        logger.warning(f"target_dim={target_dim} disagrees with the checkpoint "
+                       f"({int(w.shape[0])}); using the checkpoint's value")
+        target_dim = int(w.shape[0])
+
+    model = instantiate(model_config, target_dim=target_dim)
     missing, unexpected = model.load_state_dict(state_dict, strict=False)
     if missing:
         logger.warning(f"Missing keys when loading checkpoint: {missing[:5]}{'...' if len(missing) > 5 else ''}")
