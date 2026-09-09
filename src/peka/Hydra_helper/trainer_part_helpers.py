@@ -1,7 +1,21 @@
 from peka import logger
 import os
 import pytorch_lightning as pl
+from pytorch_lightning.callbacks import Timer
 from typing import Optional
+
+
+class SessionTimer(Timer):
+    """A wall clock for THIS process, not a budget across every resume.
+
+    Lightning's Timer writes its elapsed time into the checkpoint and adds it
+    back on load, so `max_time` is spent once and every later session stops
+    the moment it starts. Hosted runs are capped per session (Kaggle: 12h), so
+    what we actually want is "stop before this session is killed".
+    """
+
+    def load_state_dict(self, state_dict) -> None:
+        return None
 
 def trainer_config(
         # Basic configurations
@@ -41,8 +55,14 @@ def trainer_config(
     ):
 
     logger.info(f"build trainer for model.")
-    trainer_additional_dict = additional_pl_paras
+    trainer_additional_dict = dict(additional_pl_paras)
     callbacks_list = []
+
+    # Not pl.Trainer(max_time=...): that builds a stateful Timer. See SessionTimer.
+    session_limit = trainer_additional_dict.pop("max_time", None)
+    if session_limit is not None:
+        logger.info(f"Stopping gracefully after {session_limit} of this session")
+        callbacks_list.append(SessionTimer(duration=session_limit))
 
     # 3. clip gradient
     if clip_grad is not None:
