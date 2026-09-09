@@ -87,6 +87,17 @@ def trainer_config(
                                     entity=entity,
                                     name=exp_name)
         trainer_additional_dict.update({"logger":wandb_logger})
+    elif with_logger == "csv":
+        # Without this the flag was accepted and ignored: Lightning fell back to
+        # its default TensorBoard logger, so the only record of a 12-hour run
+        # was an events.out.tfevents blob. metrics.csv is the thing you can
+        # actually open and diff when a resume lands on the wrong epoch.
+        from pytorch_lightning.loggers import CSVLogger
+        logger.debug("with logger csv")
+        trainer_additional_dict.update(
+            {"logger": CSVLogger(save_dir=trainer_output_dir, name="csv")})
+    elif with_logger:
+        logger.warning(f"Unknown with_logger={with_logger!r}; using Lightning's default")
 
     if save_ckpt:
         # 4. check point
