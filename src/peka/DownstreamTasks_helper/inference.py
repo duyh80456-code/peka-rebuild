@@ -15,6 +15,7 @@ def inference_from_folder(model,
                           adata_prefix="HEST_breast_adata_",
                           img_prefix="patch_224_0.5_",
                           include_slides=None,
+                          batch_size=32,
                           device="cuda"):
     """
     Perform inference using the trained model directly from data folders
@@ -98,7 +99,6 @@ def inference_from_folder(model,
                 continue
 
             # Process patches in batches
-            batch_size = 32
             all_features = []
 
             for i in tqdm.tqdm(range(0, len(valid_indices), batch_size)):
@@ -109,7 +109,9 @@ def inference_from_folder(model,
                 #print(f"batch_imgs shape: {batch_imgs.shape}")
                 # Forward pass through model
                 features = model(batch_imgs)
-                all_features.append(features)
+                # Chuyen ve CPU ngay. Giu tren GPU thi khong duoc gi (cuoi cung
+                # van ghi ra .npy) ma lai an dan vao phan con lai cua 14.5 GiB.
+                all_features.append(features.float().cpu())
 
             # Concatenate all features
             file_features = torch.cat(all_features, dim=0)
@@ -122,3 +124,6 @@ def inference_from_folder(model,
                 np.save(handle, file_features.cpu().numpy())
             os.replace(temp_path, save_path)
             print(f"Features successfully saved to: {save_path}")
+            del all_features, file_features, img_data
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()

@@ -10,8 +10,13 @@ This is the untouched backbone: no PEFT adapter, no translate MLP, no
 checkpoint. Output is the encoder's own representation.
 """
 import argparse
+import os
 import sys
 from pathlib import Path
+
+# Phai dat TRUOC khi torch khoi tao CUDA. Lan chay dau OOM o batch 130/152 voi
+# 1.43 GiB "reserved but unallocated" -- do la phan manh, khong phai thieu that.
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -46,6 +51,10 @@ def main():
     p.add_argument("--scllm", default=DEFAULT_SCLLM)
     p.add_argument("--scllm_ckpt", default=DEFAULT_SCLLM_CKPT)
     p.add_argument("--output_dir", default=None)
+    # ViT-g fp32 (~4.4 GiB) cong ban sao fp16 ma autocast giu lai, cong
+    # activation cua batch 32 -> vua khit 14.5 GiB cua T4 roi tran. 8 la muc
+    # chay duoc; con so trich ra khong doi, chi cham hon.
+    p.add_argument("--batch_size", type=int, default=8)
     args = p.parse_args()
 
     if not torch.cuda.is_available():
@@ -76,6 +85,7 @@ def main():
         output_dir=str(out),
         adata_prefix="HEST_breast_adata_",
         img_prefix="patch_224_0.5_",
+        batch_size=args.batch_size,
         device="cuda",
     )
     logger.info(f"Done. Baseline features at {out}")
