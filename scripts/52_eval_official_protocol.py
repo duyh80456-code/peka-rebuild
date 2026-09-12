@@ -50,10 +50,15 @@ def main():
     p.add_argument("--feature_type", default="peka",
                    choices=["peka", "image_encoder", "scLLM"])
     p.add_argument("--n_splits", type=int, default=5)
-    # Bang goc mac dinh True: cat them 20% khoi train lam val. val khong duoc
-    # dung de chon model (train_regressor tra ve ngay), nen tac dung duy nhat
-    # la train it di 20%. Giu dung mac dinh de so sanh trung thuc.
-    p.add_argument("--with_independent_test_set", type=int, default=1)
+    # Ham cua repo goc mac dinh True, nhung driver cua ho
+    # (2_auto_reg_KFold_auto_H0.sh) de WITH_INDEPENDENT_TEST_SET=false va khong
+    # truyen co. Theo driver. No chi cat 20% khoi train roi bo khong dung, vi
+    # train_regressor tra ve ngay o dong 105 ma khong doc val.
+    p.add_argument("--with_independent_test_set", type=int, default=0)
+    # Driver cua ho CO truyen --mask_zero_values: bo moi spot co gen = 0
+    # (gene_expression_prediction.py:287). Phan lon spot la 0, nen viec nay
+    # doi han tap danh gia. Day la mot trong ba khac biet lon so voi script 50.
+    p.add_argument("--mask_zero_values", type=int, default=1)
     p.add_argument("--min_spots", type=int, default=321)
     p.add_argument("--feature_dir", default=None)
     p.add_argument("--output_dir", default=None)
@@ -84,7 +89,7 @@ def main():
         img_prefix="patch_224_0.5_",
         embed_prefix="HEST_breast_adata_",
         use_binned=False,
-        mask_zero_values=False,
+        mask_zero_values=bool(args.mask_zero_values),
         return_groups=True,
     )
     genes = [g for g in genes if g in labels_dict]
@@ -142,6 +147,7 @@ def main():
     print("=" * 64)
     print("  GIAO THUC CUA PAPER: KFold(shuffle=True, random_state=2025)")
     print("  spot lan nhau giua train/test -- KHONG phai slide-holdout")
+    print("  mask_zero_values = %d" % args.mask_zero_values)
     print("-" * 64)
     print("  PCC trung binh tren %d gene : %.4f" % (len(df), mean))
     print("  H-optimus-0 dong bang       : 0.624   (paper)")
